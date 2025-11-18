@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# I am signing in web using ssh
+ssh -i ~/.ssh/school ubuntu@6883-web-01
