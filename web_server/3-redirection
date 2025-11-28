@@ -31,5 +31,5 @@ sed -i "/server_name _;/a\\
 echo "--- Restarting Nginx service ---"
 service nginx restart
 
-echo "Nginx configuration complete. Test the redirect at /redirect_me"
+echo "Nginx configuration complete. Test the redirect at /redirect_me/
 

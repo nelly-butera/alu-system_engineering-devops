@@ -11,4 +11,3 @@ sed -i 's/80/80/g' /etc/nginx/sites-enabled/default
 
 # Ensure Nginx is started using service (not systemctl)
 service nginx restart
-
