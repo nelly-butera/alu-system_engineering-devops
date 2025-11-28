@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Configures an Nginx server to have a permanent 301 redirect for /redirect_me
+# The script installs Nginx if not already installed and modifies the default
+# configuration file to add the required redirection.
+
+# 1. Update package lists and install Nginx
+echo "--- Updating package lists and installing Nginx ---"
+# Using > /dev/null 2>&1 to silence output for a cleaner install process
+apt-get update -y > /dev/null 2>&1
+apt-get install nginx -y > /dev/null 2>&1
+
+# 2. Create custom index.html (as per the previous script 1-install_nginx_web_server)
+echo "--- Creating custom index.html ---"
+echo "Holberton School for the win!" | sudo tee /var/www/html/index.html > /dev/null
+
+# 3. Configure the 301 Redirection using sed
+# This finds the line 'server_name _;' and appends the multi-line location block
+# for the permanent redirect (301) immediately after it in the default config.
+echo "--- Configuring 301 permanent redirect for /redirect_me ---"
+NGINX_CONF="/etc/nginx/sites-enabled/default"
+REDIRECT_URL="https://www.youtube.com/watch?v=QH2-TGUlwu4"
+
+# The 'a\' (append) command is used to insert multiple lines of text
+# after the matching pattern '/server_name _;/'
+sed -i "/server_name _;/a\\
+    location /redirect_me {\\
+        return 301 ${REDIRECT_URL};\\
+    }" "$NGINX_CONF"
+
+# 4. Restart Nginx service to load the new configuration
+echo "--- Restarting Nginx service ---"
+service nginx restart
+
+echo "Nginx configuration complete. Test the redirect at /redirect_me"
+

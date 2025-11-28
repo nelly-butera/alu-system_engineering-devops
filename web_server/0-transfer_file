@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# Transfers file from the client to a server using SCP.
+# Script that transfers a file to a server using SCP
 
 if [ "$#" -lt 4 ]; then
-  echo "Usage: 0-transfer_file PATH_TO_FILE IP USERNAME PATH_TO_SSH_KEY"
-  exit 1
+    echo "Usage: 0-transfer_file PATH_TO_FILE IP USERNAME PATH_TO_SSH_KEY"
+    exit 1
 fi
 
 FILE_PATH="$1"
 SERVER_IP="$2"
-USERNAME="$3"
+USER="$3"
 SSH_KEY="$4"
 
-scp -i "$SSH_KEY" -o StrictHostKeyChecking=no "$FILE_PATH" "$USERNAME@$SERVER_IP:~/"
+scp -o StrictHostKeyChecking=no -i "$SSH_KEY" "$FILE_PATH" "$USER@$SERVER_IP:~/"
 
