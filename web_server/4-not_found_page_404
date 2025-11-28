@@ -34,3 +34,4 @@ sed -i "/server_name _;/a\\
 
 # --- 4. Restart Nginx service to load the new configuration ---
 service nginx restart
+
