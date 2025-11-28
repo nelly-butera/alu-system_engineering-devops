@@ -1,16 +1,68 @@
 #!/usr/bin/env bash
-#Bash script that installs HAProxy & makes configurations
+# Bash script that installs HAProxy & makes configurations for round-robin load balancing.
 
-apt-get -y install software-properties-common
-add-apt-repository ppa:vbernat/haproxy-1.8
-apt-get update
-apt-get -y install haproxy
-echo "ENABLED=1" | sudo tee -a /etc/default/haproxy
-printf %s "listen 5819-webs
+# 1. Update and Install HAProxy (Using the official package, often easier than PPA)
+sudo apt-get update
+sudo apt-get -y install haproxy
+
+# 2. Enable HAProxy service (This step is often necessary for older init systems)
+echo 'ENABLED=1' | sudo tee /etc/default/haproxy
+
+# 3. BACKUP the original configuration file
+sudo cp /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.bak
+
+# 4. Write the NEW Configuration to the file
+# Note: Use the PRIVATE IP addresses of your web servers, not public/load balancer IP.
+# If you don't know the Private IPs, use the Hostnames (which should resolve internally).
+
+HAPROXY_CONFIG=$(cat << EOF
+global
+    log /dev/log    local0
+    chroot /var/lib/haproxy
+    stats socket /run/haproxy/admin.sock mode 660 level admin
+    stats timeout 30s
+    user haproxy
+    group haproxy
+    daemon
+
+defaults
+    log     global
+    mode    http
+    option  httplog
+    option  dontlognull
+    timeout connect 5000
+    timeout client  50000
+    timeout server  50000
+    errorfile 400 /etc/haproxy/errors/400.http
+    errorfile 403 /etc/haproxy/errors/403.http
+    errorfile 408 /etc/haproxy/errors/408.http
+    errorfile 500 /etc/haproxy/errors/500.http
+    errorfile 502 /etc/haproxy/errors/502.http
+    errorfile 503 /etc/haproxy/errors/503.http
+    errorfile 504 /etc/haproxy/errors/504.http
+
+frontend http_front
+    # Listen on port 80 of the Load Balancer IP
     bind *:80
-    mode http
+    default_backend http_back
+
+backend http_back
+    # Distribute requests using a roundrobin algorithm
     balance roundrobin
-    server 6926-web-01 52.91.196.92:80 check
+    
+    # Define your backend servers
+    # **NOTE:** REPLACE THE IPs BELOW with the **PRIVATE IPs** of your web servers.
+    # Using the hostnames (if correctly configured) is generally safer.
+    server 6926-web-01 52.91.196.92:80 check 
     server 6926-web-02 54.91.184.243:80 check
-" >> /etc/haproxy/haproxy.cfg
+EOF
+)
+
+# Overwrite the default config with the new, required configuration
+echo "${HAPROXY_CONFIG}" | sudo tee /etc/haproxy/haproxy.cfg
+
+# 5. Restart HAProxy to apply the new configuration
 sudo service haproxy restart
+
+# 6. Check the status (optional, but good for debugging)
+sudo service haproxy status
