@@ -1,14 +1,36 @@
 #!/usr/bin/env bash
-# Configures Nginx to have a custom 404 page containing "Ceci n'est pas une page"
+# Configures Nginx on a new Ubuntu machine to use a custom 404 page
+# that contains the string "Ceci n'est pas une page".
 
-apt-get update -y
-apt-get install nginx -y
+# The script installs Nginx if not already installed.
 
-# Create custom 404 page
-echo "Ceci n'est pas une page" > /var/www/html/custom_404.html
+# --- 1. Update package lists and install Nginx ---
+apt-get update -y > /dev/null 2>&1
+apt-get install nginx -y > /dev/null 2>&1
 
-# Update default nginx config to use the new 404 page
-sed -i '/server_name _;/a \\terror_page 404 /custom_404.html;\n\tlocation = /custom_404.html {\n\t\troot /var/www/html;\n\t\tinternal;\n\t}' /etc/nginx/sites-available/default
+# --- 2. Create the custom HTML files ---
 
-# Restart nginx
+# Create the standard index.html (reusing base configuration)
+echo "Holberton School for the win!" | sudo tee /var/www/html/index.html > /dev/null
+
+# Create the custom 404 error page file with the required string
+echo "Ceci n'est pas une page" | sudo tee /var/www/html/custom_404.html > /dev/null
+
+# --- 3. Configure the custom 404 error page using sed ---
+NGINX_CONF="/etc/nginx/sites-enabled/default"
+CUSTOM_404_PAGE="/custom_404.html"
+
+# The 'a\' (append) command inserts the error_page directive and the location block
+# after the 'server_name _;' line.
+# 'error_page 404 /custom_404.html;' tells Nginx to serve the content of /custom_404.html
+# whenever a 404 is encountered, while keeping the 404 status code.
+# The 'internal;' directive prevents direct access to the 404 page file.
+sed -i "/server_name _;/a\\
+    error_page 404 ${CUSTOM_404_PAGE};\\
+    location = ${CUSTOM_404_PAGE} {\\
+        root /var/www/html;\\
+        internal;\\
+    }" "$NGINX_CONF"
+
+# --- 4. Restart Nginx service to load the new configuration ---
 service nginx restart
