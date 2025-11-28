@@ -1,19 +1,27 @@
 #!/usr/bin/env bash
-# configure Nginx server so that /redirect_me is redirecting to another page
+# Configures Nginx to add a custom HTTP response header X-Served-By
+# with the value set to the server's hostname ($hostname).
 
-sudo apt-get update -y
-sudo apt-get install -y nginx
-config=\
-"server {
-        listen 80 default_server;
-        listen [::]:80 default_server;
-        root /var/www/html;
-        index index.html index.htm index.nginx-debian.html;
-        server_name _;
-	add_header X-Served-By \$HOSTNAME;
-}
-"
-sudo chown -R "$USER":"$USER" /etc/nginx/sites-available/default
-echo "$config" > /etc/nginx/sites-available/default
-sudo service nginx restart
+# This script assumes it is run with elevated privileges (e.g., 'sudo ./0-custom_http_response_header').
 
+# --- 1. Update package lists and install Nginx ---
+apt-get update -y > /dev/null 2>&1
+apt-get install nginx -y > /dev/null 2>&1
+
+# --- 2. Create the standard index.html (for completeness) ---
+# Use tee to safely write to the root-owned directory
+echo "Hello from the web server!" | tee /var/www/html/index.html > /dev/null
+
+# --- 3. Configure the X-Served-By custom header using sed ---
+NGINX_CONF="/etc/nginx/sites-enabled/default"
+
+# This sed command finds the line 'server_name _;' and inserts the 'add_header' directive
+# immediately after it. We use '\$hostname' so Nginx sees '$hostname' and uses its internal
+# variable, which holds the OS hostname.
+# The 'a \' command is used to append the new line.
+sed -i "/server_name _;/a \    add_header X-Served-By \$hostname;" "$NGINX_CONF"
+
+# --- 4. Restart Nginx service to load the new configuration ---
+service nginx restart
+
+echo "Nginx configuration complete. X-Served-By header added with value: $(hostname)"
