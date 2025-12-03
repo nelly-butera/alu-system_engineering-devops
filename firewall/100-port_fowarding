@@ -1,0 +1,31 @@
+#!/bin/bash
+# 100-port_forwarding
+
+# Reset UFW to defaults (optional, but ensures clean state)
+sudo ufw reset
+
+# Deny all incoming traffic by default
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+
+# Allow SSH, HTTP, HTTPS
+sudo ufw allow 22
+sudo ufw allow 80
+sudo ufw allow 443
+
+# Enable UFW (non-interactive)
+sudo ufw --force enable
+
+# Add port forwarding: 8080 -> 80
+# Ensure /etc/ufw/before.rules exists
+BEFORE_RULES="/etc/ufw/before.rules"
+
+# Add the NAT rules if not already present
+sudo sed -i '/# nat table/i \
+*nat\n:PREROUTING ACCEPT [0:0]\n-A PREROUTING -p tcp --dport 8080 -j REDIRECT --to-port 80\nCOMMIT\n' $BEFORE_RULES
+
+# Reload UFW to apply changes
+sudo ufw reload
+
+# Show status for verification
+sudo ufw status verbose
