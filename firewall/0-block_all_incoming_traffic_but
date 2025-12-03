@@ -1,10 +1,22 @@
-Status: active
+#!/bin/bash
+# 0-block_all_incoming_traffic_but
 
-     To                         Action      From
-     --                         ------      ----
-[ 1] 22/tcp                     ALLOW IN    Anywhere
-[ 2] 80/tcp                     ALLOW IN    Anywhere
-[ 3] 443/tcp                    ALLOW IN    Anywhere
-[ 4] 22/tcp (v6)                ALLOW IN    Anywhere (v6)
-[ 5] 80/tcp (v6)                ALLOW IN    Anywhere (v6)
-[ 6] 443/tcp (v6)               ALLOW IN    Anywhere (v6)
+# Reset UFW to defaults
+sudo ufw reset
+
+# Deny all incoming traffic
+sudo ufw default deny incoming
+
+# Allow all outgoing traffic
+sudo ufw default allow outgoing
+
+# Allow incoming SSH, HTTP, HTTPS explicitly
+sudo ufw allow 22
+sudo ufw allow 80
+sudo ufw allow 443
+
+# Enable UFW
+sudo ufw --force enable
+
+# Show status
+sudo ufw status verbose
